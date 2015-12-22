@@ -218,9 +218,9 @@ class NN{
 		this.fq = matrix.MultiplyingMatrix(this.w1, input);
 		this.Oq = matrix.SubtractionMatrix(this.fq, this.m);
 		for(int i=0; i<this.Oq.length; i++){
-			this.Oq[i][1] *= (-1 * this.Oq[i][1]); 
-			this.Oq[i][1] /= (this.sigma[i][1] * this.sigma[i][1]);
-			this.Oq[i][1] = Math.exp(this.Oq[i][1]);
+			this.Oq[i][0] *= (-1 * this.Oq[i][0]); 
+			this.Oq[i][0] /= (this.sigma[i][0] * this.sigma[i][0]);
+			this.Oq[i][0] = Math.exp(this.Oq[i][0]);
 		}
 		this.Or = matrix.MultiplyingMatrix(this.w3, this.Oq);
 		return null;
@@ -234,7 +234,10 @@ class NN{
 		double[][] tempm = matrix.CopyMatrix(this.m);
 		double[][] tempsigma = matrix.CopyMatrix(this.sigma);
 		for(int i=0; i<this.numberOfW; i++){
-			this.w3[i][1] += this.e * error[1][1] * this.Oq[i][1]; 
+			this.w3[i][0] += this.e * error[0][0] * this.Oq[i][0]; 
+			this.m[i][0] += (-2 * this.e * this.error[0][0] * tempw3[i][0] * (this.fq[i][0] - this.m[i][0]) * this.Oq[i][0] / Math.pow(this.sigma[i][0],2));
+			this.sigma[i][0] += (-2 * this.e * this.error[0][0] * tempw3[i][0] * Math.pow((this.fq[i][0]-tempm[i][0]), 2) * this.Oq[i][0] / Math.pow(this.sigma[i][0],3));;
+			this.w1[i][0] = (2 * this.e * this.error[0][0] * tempw3[i][0] * (this.fq[i][0] - this.m[i][0]) * this.Oq[i][0] / Math.pow(this.sigma[i][0],2));
 		}
 	}
 		
