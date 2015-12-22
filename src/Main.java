@@ -12,6 +12,9 @@ public class Main {
 		RandomCreateUserDefineMatrix(train_u,train_y);
 		RandomCreateUserDefineMatrix(test_u,test_y);
 
+		//matrix.ShowMatrix(train_u);
+		//matrix.ShowMatrix(train_y);
+		
 		matrix.NormalizationMatrix(train_u);
 		matrix.NormalizationMatrix(train_y);
 		matrix.NormalizationMatrix(test_u);
@@ -114,7 +117,7 @@ public class Main {
 		
 		for(int i = 0; i<u.length; i++){
 			for(int j = 0; j<u[i].length; j++){
-				u[i][j] = Math.random()*10;
+				u[i][j] = Math.random()*2;
 				y[0][j] += u[i][j]*u[i][j];
 			}
 		}
@@ -216,7 +219,7 @@ class NN{
 	double Or[][];
 	double error[][];
 	
-	double e = 0.1;
+	double e = 0.001;
 	NN(int numberOfInput, int numberOfOutput, int numberOfW){
 		this.numberOfW = numberOfW;
 		this.numberOfInput = numberOfInput;
@@ -260,12 +263,17 @@ class NN{
 		double[][] Qr = new double[this.numberOfOutput][1];
 		
 		this.fq = matrix.MultiplyingMatrix(this.w1, input);
+		for(int i=0; i<this.Oq.length; i++){
+			this.Oq[i][0] = (Math.exp(this.fq[i][0])-Math.exp(-1*this.fq[i][0]))/(Math.exp(this.fq[i][0])+Math.exp(-1*this.fq[i][0]));
+		}
+		/*
 		this.Oq = matrix.SubtractionMatrix(this.fq, this.m);
 		for(int i=0; i<this.Oq.length; i++){
 			this.Oq[i][0] *= (-1 * this.Oq[i][0]); 
 			this.Oq[i][0] /= Math.pow(this.sigma[i][0],2);
 			this.Oq[i][0] = Math.exp(this.Oq[i][0]);
 		}
+		*/
 		this.Or = matrix.MultiplyingMatrix(this.w3, this.Oq);
 		//return null;
 	}
@@ -274,17 +282,22 @@ class NN{
 		Matrix matrix = new Matrix();
 		//System.out.println("Before error: " + this.error[0][0]);
 		this.error = matrix.SubtractionMatrix(output, this.Or);
-		System.out.println("error: " + this.error[0][0]);
+		//System.out.println("error: " + this.error[0][0]);
 		//double[][] tempw1 = matrix.CopyMatrix(this.w1);
 		double[][] tempw3 = matrix.CopyMatrix(this.w3);
 		double[][] tempm = matrix.CopyMatrix(this.m);
 		double[][] tempsigma = matrix.CopyMatrix(this.sigma);
 		for(int i=0; i<this.numberOfW; i++){
 			this.w3[0][i] += this.e * error[0][0] * this.Oq[i][0]; 
-			this.m[i][0] += (-2 * this.e * this.error[0][0] * tempw3[0][i] * (this.fq[i][0] - tempm[i][0]) * this.Oq[i][0] / Math.pow(tempsigma[i][0],2));
-			this.sigma[i][0] += (-2 * this.e * this.error[0][0] * tempw3[0][i] * Math.pow((this.fq[i][0]-tempm[i][0]), 2) * this.Oq[i][0] / Math.pow(tempsigma[i][0],3));;
+			//this.m[i][0] += (-2 * this.e * this.error[0][0] * tempw3[0][i] * (this.fq[i][0] - tempm[i][0]) * this.Oq[i][0] / Math.pow(tempsigma[i][0],2));
+			//this.sigma[i][0] += (-2 * this.e * this.error[0][0] * tempw3[0][i] * Math.pow((this.fq[i][0]-tempm[i][0]), 2) * this.Oq[i][0] / Math.pow(tempsigma[i][0],3));;
+			/*
 			for(int j=0; j<this.w1[i].length; j++){
 				this.w1[i][j] = (2 * this.e * this.error[0][0] * tempw3[0][i] * (this.fq[i][0] - tempm[i][0]) * this.Oq[i][0] * input[j][0]/ Math.pow(tempsigma[i][0],2));
+			}
+			*/
+			for(int j=0; j<this.w1[i].length; j++){
+				this.w1[i][j] = (-4 * this.error[0][0] * tempw3[0][i] * input[j][0] / Math.pow((Math.exp(this.fq[i][0]) + Math.exp(-1*this.fq[i][0])),2));
 			}
 		}
 	}
@@ -292,9 +305,11 @@ class NN{
 	public void TrainingBox(double input[][], double output[][]){
 		double[][] tempInput = new double[input.length][1];
 		double[][] tempOutput = new double[output.length][1];
+		double[][] tempError = new double[output.length][output[0].length];
 		int epochs = 1000;
 		
 		for(int i=0; i<epochs; i++){
+			
 			for(int j=0; j<input[0].length; j++){
 				for(int k=0; k<input.length; k++){
 					tempInput[k][0] = input[k][j];
@@ -304,7 +319,17 @@ class NN{
 				}			
 				forward(tempInput);
 				backward(tempInput, tempOutput);
+				//要修改 有爆破
+				tempError[0][j] = this.error[0][0];
 			}
+			
+			double sum = 0;
+			for(int j=0; j<tempError[0].length; j++){
+				sum += Math.pow(tempError[0][j], 2);
+			}
+			sum /= tempError[0].length;
+			sum = Math.sqrt(sum);
+			System.out.println("RMS(error): " + sum);
 		}
 		
 		/*
