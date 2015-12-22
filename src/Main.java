@@ -1,17 +1,61 @@
 public class Main {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		double train_u[][] = new double[2][80];
-		double train_y[][] = new double[1][80];
+		double train_u[][] = new double[2][800];
+		double train_y[][] = new double[1][800];
 		double test_u[][] = new double[2][20];
 		double test_y[][] = new double[1][20];
-
 		
+		Matrix matrix = new Matrix();
+		NN nn = new NN(2, 1, 3);
+		nn.Initialization();
 		RandomCreateUserDefineMatrix(train_u,train_y);
 		RandomCreateUserDefineMatrix(test_u,test_y);
+
+		matrix.NormalizationMatrix(train_u);
+		matrix.NormalizationMatrix(train_y);
+		matrix.NormalizationMatrix(test_u);
+		matrix.NormalizationMatrix(test_y);
+
+		nn.TrainingBox(test_u, test_y);
 		
 		
-		double[][] m1 = { { 1, 2, 3 }, { 4, 5, 6 } };
+		//System.out.println("error: " + nn.error[0][0]);
+		//nn.TrainingBox(test_u, test_y);
+		
+		//System.out.println("Out error: " + nn.error[0][0]);
+		
+		/*
+		double[][] m1 = {	{0.2},
+							{0.3}
+						};
+        double[][] m2 = {
+        					{0.5}
+        				};
+        
+		nn.forward(m1);
+		nn.backward(m1, m2);
+		double[][] m3 = {	{0.1361654},
+							{0.521}
+						};
+		double[][] m4 = {
+							{0.95874321}
+						};
+
+		nn.forward(m1);
+		nn.backward(m1, m2);
+		
+		
+		//nn.printNN();
+		
+		double[][] m1 = { { 5, 2 }, { 4, 2 }, { 52, 1 } };
+        double[][] m2 = { { 1, 2 }, { 3, 4 }, { 5, 6 } };
+        double[][] m3;
+        Matrix matrix = new Matrix();
+        m3 = matrix.SubtractionMatrix(m1, m2);
+		matrix.ShowMatrix(m3);
+		
+		double[][] m1 = { { 5, 2 }, { 4, 2 }, { 52, 1 } };
         double[][] m2 = { { 1, 2 }, { 3, 4 }, { 5, 6 } };
         double[][] m3;
         //double[][] x = new double(m3);
@@ -19,7 +63,7 @@ public class Main {
         m3 = matrix.MultiplyingMatrix(m1, m2);
 		matrix.ShowMatrix(m3);
 		
-		/*
+		
 		NormalizationMatrix(u[0]);
 		NormalizationMatrix(u[1]);
 		NormalizationMatrix(y[0]);
@@ -34,13 +78,6 @@ public class Main {
 				fq[i][j] = 0;
 			}
 		}
-		
-		*/
-		
-		
-		
-		
-		/*
 		System.out.println("u");
 		ShowMatrix(u);
 		System.out.println("---------------------------------------------------------------------------------------------------------------------------------------------------");
@@ -200,7 +237,7 @@ class NN{
 	public void Initialization(){
 		RandomCreateParameterMatrix(this.w1);
 		RandomCreateParameterMatrix(this.m);
-		RandomCreateParameterMatrix(this.sigma);
+		RandomCreatParameterMatrixZeroToOne(this.sigma);
 		RandomCreateParameterMatrix(this.w3);
 	}
 	public void RandomCreateParameterMatrix(double x[][]){
@@ -210,8 +247,15 @@ class NN{
 			}
 		}
 	}
+	public void RandomCreatParameterMatrixZeroToOne(double x[][]){
+		for(int i = 0; i<x.length; i++){
+			for(int j = 0; j<x[i].length; j++){
+				x[i][j] = Math.random();
+			}
+		}
+	}
 	
-	public double[][] forward(double input[][]){
+	public void forward(double input[][]){
 		Matrix matrix = new Matrix();
 		double[][] Qr = new double[this.numberOfOutput][1];
 		
@@ -219,31 +263,65 @@ class NN{
 		this.Oq = matrix.SubtractionMatrix(this.fq, this.m);
 		for(int i=0; i<this.Oq.length; i++){
 			this.Oq[i][0] *= (-1 * this.Oq[i][0]); 
-			this.Oq[i][0] /= (this.sigma[i][0] * this.sigma[i][0]);
+			this.Oq[i][0] /= Math.pow(this.sigma[i][0],2);
 			this.Oq[i][0] = Math.exp(this.Oq[i][0]);
 		}
 		this.Or = matrix.MultiplyingMatrix(this.w3, this.Oq);
-		return null;
+		//return null;
 	}
 	
 	public void backward(double input[][], double output[][]){
 		Matrix matrix = new Matrix();
+		//System.out.println("Before error: " + this.error[0][0]);
 		this.error = matrix.SubtractionMatrix(output, this.Or);
-		double[][] tempw1 = matrix.CopyMatrix(this.w1);
+		System.out.println("error: " + this.error[0][0]);
+		//double[][] tempw1 = matrix.CopyMatrix(this.w1);
 		double[][] tempw3 = matrix.CopyMatrix(this.w3);
 		double[][] tempm = matrix.CopyMatrix(this.m);
 		double[][] tempsigma = matrix.CopyMatrix(this.sigma);
 		for(int i=0; i<this.numberOfW; i++){
-			this.w3[i][0] += this.e * error[0][0] * this.Oq[i][0]; 
-			this.m[i][0] += (-2 * this.e * this.error[0][0] * tempw3[i][0] * (this.fq[i][0] - this.m[i][0]) * this.Oq[i][0] / Math.pow(this.sigma[i][0],2));
-			this.sigma[i][0] += (-2 * this.e * this.error[0][0] * tempw3[i][0] * Math.pow((this.fq[i][0]-tempm[i][0]), 2) * this.Oq[i][0] / Math.pow(this.sigma[i][0],3));;
-			this.w1[i][0] = (2 * this.e * this.error[0][0] * tempw3[i][0] * (this.fq[i][0] - this.m[i][0]) * this.Oq[i][0] / Math.pow(this.sigma[i][0],2));
+			this.w3[0][i] += this.e * error[0][0] * this.Oq[i][0]; 
+			this.m[i][0] += (-2 * this.e * this.error[0][0] * tempw3[0][i] * (this.fq[i][0] - tempm[i][0]) * this.Oq[i][0] / Math.pow(tempsigma[i][0],2));
+			this.sigma[i][0] += (-2 * this.e * this.error[0][0] * tempw3[0][i] * Math.pow((this.fq[i][0]-tempm[i][0]), 2) * this.Oq[i][0] / Math.pow(tempsigma[i][0],3));;
+			for(int j=0; j<this.w1[i].length; j++){
+				this.w1[i][j] = (2 * this.e * this.error[0][0] * tempw3[0][i] * (this.fq[i][0] - tempm[i][0]) * this.Oq[i][0] * input[j][0]/ Math.pow(tempsigma[i][0],2));
+			}
 		}
 	}
 		
 	public void TrainingBox(double input[][], double output[][]){
-		double[][] temp = new double[input.length][1];
+		double[][] tempInput = new double[input.length][1];
+		double[][] tempOutput = new double[output.length][1];
+		int epochs = 1000;
 		
+		for(int i=0; i<epochs; i++){
+			for(int j=0; j<input[0].length; j++){
+				for(int k=0; k<input.length; k++){
+					tempInput[k][0] = input[k][j];
+				}
+				for(int k=0; k<output.length; k++){
+					tempOutput[k][0] = output[k][j];
+				}			
+				forward(tempInput);
+				backward(tempInput, tempOutput);
+			}
+		}
+		
+		/*
+		Matrix matrix = new Matrix();
+		for(int j=0; j<input[0].length; j++){
+			for(int k=0; k<input.length; k++){
+				tempInput[k][0] = input[k][j];
+			}
+			for(int k=0; k<output.length; k++){
+				tempOutput[k][0] = output[k][j];
+			}
+			//matrix.ShowMatrix(tempInput);
+			//matrix.ShowMatrix(tempOutput);
+			forward(tempInput);
+			backward(tempInput, tempOutput);
+		}
+		*/
 	}
 	
 	public void printNN(){
