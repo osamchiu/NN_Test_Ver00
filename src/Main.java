@@ -309,7 +309,7 @@ class NN{
 		double[][] tempInput = new double[input.length][1];
 		double[][] tempOutput = new double[output.length][1];
 		double[][] tempError = new double[output.length][output[0].length];
-		int epochs = 100;
+		int epochs = 1000;
 		
 		for(int i=0; i<epochs; i++) {
 
